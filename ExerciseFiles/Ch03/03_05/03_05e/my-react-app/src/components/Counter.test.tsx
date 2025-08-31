@@ -1,0 +1,54 @@
+import {
+  render,
+  screen,
+  fireEvent,
+} from "@testing-library/react";
+import Counter from "./Counter";
+import { vi } from "vitest";
+
+// Mock the analytics service with vitest, on the analytics object with trackEvent
+vi.mock("../services/analytics", () => ({
+  analytics: {
+    trackEvent: vi.fn(),
+  },
+}));
+
+import { analytics } from "../services/analytics";
+
+// Wrap tests in describe block for better organization
+describe("Counter Component", () => {
+  // Test that the analytics.trackEvent is called on increment and decrement
+  test("calls analytics.trackEvent on increment", () => {
+    render(<Counter initialValue={0} />);
+
+    const incrementButton = screen.getByText(/Increment/i);
+
+    // Simulate increment button click
+    fireEvent.click(incrementButton);
+    expect(analytics.trackEvent).toHaveBeenCalledWith(
+      "count_changed",
+      { count: 1 }
+    );
+  });
+  test("renders Counter component and responds to button clicks", () => {
+    render(<Counter initialValue={5} />);
+
+    // Check initial count
+    const countElement = screen.getByText(/Count: 5/i);
+    expect(countElement).toBeInTheDocument();
+
+    // Simulate increment button click
+    const incrementButton = screen.getByText(/Increment/i);
+    fireEvent.click(incrementButton);
+    expect(
+      screen.getByText(/Count: 6/i)
+    ).toBeInTheDocument();
+
+    // Simulate decrement button click
+    const decrementButton = screen.getByText(/Decrement/i);
+    fireEvent.click(decrementButton);
+    expect(
+      screen.getByText(/Count: 5/i)
+    ).toBeInTheDocument();
+  });
+});
